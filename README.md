@@ -9,8 +9,13 @@ npm install @seanvelasco/ecg
 ```typescript
 
 ```
+
+## Output
+
+## Sample data
+
 ## Supported electrocardiograms & XML formats
 
 - Philips PageWriter TC10
 - GE MAC 800
-- Mindray BeneHeart R2
+- Mindray BeneHeart R3
