@@ -40,14 +40,3 @@ class ECG {
 }
 
 export default ECG
-import fs from 'fs'
-
-;
-(async () => {
-
-    const xml = fs.readFileSync('GEMAC800_2P0P6_SNSJ415190417WA_resting_1_2020-03-05T09-23-07.xml')
-
-    const ecg = new ECG(xml.toString())
-
-    fs.writeFileSync('test.svg', await ecg.plot('svg'))
-})()
