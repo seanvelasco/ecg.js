@@ -1,8 +1,9 @@
 {
-  "name": "ecg",
-  "version": "0.0.1",
+  "name": "@seanvelasco/ecg",
+  "version": "0.0.2",
   "description": "",
-  "main": "index.js",
+  "main": "build/index.js",
+  "files": ["build"],
   "scripts": {
     "build": "tsc"
   },

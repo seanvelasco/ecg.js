@@ -3,14 +3,16 @@
     "lib": ["esnext", "dom"],
     "module": "commonjs",
     "moduleResolution": "node",
-    "outDir": "dist",
+    "outDir": "build",
     "rootDir": "src",
     "declaration": true,
     "skipLibCheck": true,
-    "sourceMap": false,
+    "sourceMap": true,
     "target": "es6",
     "isolatedModules": false,
     "esModuleInterop": true,
-    "removeComments": true
-  }
+    "removeComments": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "baseUrl": ".",
 }
