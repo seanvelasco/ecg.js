@@ -1,6 +1,7 @@
 import { plot } from './plot'
 import { documentParser } from './documentParser'
 import { reconstituteData, groupData, normalizeData } from './treatDataset'
+import sharp from 'sharp'
 
 class ECG {
     barcode: string
@@ -22,14 +23,31 @@ class ECG {
         this.channels = channels
     }
 
-    plot = (options?: { grid?: string, line?: string, format?: 'jpeg' | 'png' | 'svg' | 'pdf' }): string => {
+    plot = async (format: 'svg' | 'jpeg' | 'png' | 'pdf' | 'webp' = 'png', options?: { grid?: string, line?: string, rows: number, columns: number }): Promise<Buffer> => {
 
         const groupedLeads = groupData(this.channels)
 
         const normaalizedData = normalizeData(groupedLeads)
 
-        return plot(normaalizedData, [], this.barcode)
+        const image = plot(normaalizedData, [], this.barcode)
+
+        if (format !== 'svg') {
+            return await sharp(Buffer.from(image), { density: 500 }).toFormat(format).toBuffer()
+        }
+
+        return Buffer.from(image)
     }
 }
 
 export default ECG
+import fs from 'fs'
+
+;
+(async () => {
+
+    const xml = fs.readFileSync('GEMAC800_2P0P6_SNSJ415190417WA_resting_1_2020-03-05T09-23-07.xml')
+
+    const ecg = new ECG(xml.toString())
+
+    fs.writeFileSync('test.svg', await ecg.plot('svg'))
+})()

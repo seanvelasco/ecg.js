@@ -74,6 +74,8 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 
 	const body = d3.select(document).select('body')
 
+	
+
 	const svg = body
 		.append('svg')
 		.attr('xmlns', 'http://www.w3.org/2000/svg')
@@ -81,8 +83,13 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 		.attr('width', width)
 		.attr('height', height)
 		.attr('style', `border: ${borderWidth / 2}px solid ${majorGridColor};`) // Outer border
-
-	// Append company and lab-specific metadata
+		.attr('shape-rendering', "crispEdges")
+		
+	// add rect
+	svg.append('rect')
+		.attr('width', width)
+		.attr('height', height)
+		.attr('fill', 'white')
 
 	const generateMetadata = () => {
 		if (barcode) {
@@ -176,7 +183,6 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 	const generateLines = () => {
 		for (const lead of range(rows)) {
 			const displacement = lead * (3 * cm) * pixels
-			console.log(data[lead])
 			for (const point in data[lead]) {
 				data[lead][point][1] -= displacement
 			}
@@ -194,6 +200,8 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 
 			// Hardcoded coordinates for texts
 			// Ideally, these would be calculated based on page dimensions
+
+
 			const offset = 10
 			const yOffset = 20
 
