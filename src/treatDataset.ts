@@ -33,14 +33,14 @@ const reconstituteData = (channels: { [key: string]: number[] }) => {
 // Introduce a minimum and maximum amplitude for each channel
 // Derive the min and max from the document's set amplitude
 
-const calibrateDate = (channels: any) => {
+// const calibrateDate = (channels: any) => {
 
-    // in every channel, find the first value that is not 0
+//     // in every channel, find the first value that is not 0
 
-    for (const channel in channels) {
-        channels[channel].unshift(-250, 250)
-    }
-}
+//     for (const channel in channels) {
+//         channels[channel].unshift(-baseline, baseline)
+//     }
+// }
 
 // Group leads into their arrangement on the chart
 // Data structure designed on what would be easier to manipulate/plot using D3
@@ -61,8 +61,10 @@ const calibrateDate = (channels: any) => {
 
 const groupData = (channels: any) => {
     const { I, II, III, AVR, AVL, AVF, V1, V2, V3, V4, V5, V6 } = channels
-    calibrateDate(channels)
-    // Logic for grouping leads
+    // calibrateDate(channels)
+
+    // get the max and min of each channel
+    const baseline = 1000
 
     // Take 1st quarter of A lead & append to group W
     // Take 2nd quarter of B lead & append to group W
@@ -72,31 +74,31 @@ const groupData = (channels: any) => {
 
     const group1 = [
         ...I.slice(0, I.length / 4),
-        -250, 250,
+        -baseline, baseline,
         ...AVR.slice(AVR.length / 4, (AVR.length / 4) * 2),
-        -250, 250,
+        -baseline, baseline,
         ...V1.slice((V1.length / 4) * 2, (V1.length / 4) * 3),
-        -250, 250,
+        -baseline, baseline,
         ...V4.slice((V4.length / 4) * 3, (V4.length / 4) * 4)
     ]
 
     const group2 = [
         ...II.slice(0, II.length / 4),
-        -250, 250,
+        -baseline, baseline,
         ...AVL.slice(II.length / 4, (II.length / 4) * 2),
-        -250, 250,
+        -baseline, baseline,
         ...V2.slice((II.length / 4) * 2, (II.length / 4) * 3),
-        -250, 250,
+        -baseline, baseline,
         ...V5.slice((II.length / 4) * 3, (II.length / 4) * 4)
     ]
 
     const group3 = [
         ...III.slice(0, III.length / 4),
-        -250, 250,
+        -baseline, baseline,
         ...AVF.slice(III.length / 4, (III.length / 4) * 2),
-        -250, 250,
+        -baseline, baseline,
         ...V3.slice((III.length / 4) * 2, (III.length / 4) * 3),
-        -250, 250,
+        -baseline, baseline,
         ...V6.slice((III.length / 4) * 3, (III.length / 4) * 4)
     ]
 
@@ -106,7 +108,7 @@ const groupData = (channels: any) => {
     // const group3Min = Math.min(...group3)
 
     // introduce a minimum and maximum to II
-    const group4 = [...II]
+    const group4 = [baseline, -baseline, ...II]
 
 
     // const group4 = II
@@ -132,9 +134,10 @@ const groupData = (channels: any) => {
 // Base it instead from the document's set amplitude + padding
 const normalizeData = (newLeads: any) => {
 
+
     const normalizeTime = (sequence: number[]) => {
         // Normalize data points from 0 to duration (s)
-        const ratio = Math.max(...sequence) / 10
+        const ratio = Math.max(...sequence) / 11
         const normalized = sequence.map((value: number) => {
             return value / ratio
         })
@@ -160,6 +163,9 @@ const normalizeData = (newLeads: any) => {
     const waveform = newLeads.map((lead: number[]) => {
         // Time variable is just the index
         const waveformArray = lead.map((value: number, time: number) => {
+            if (isNaN(value)) {
+                return [time, 0]
+            }
             return [time, value]
         })
 
