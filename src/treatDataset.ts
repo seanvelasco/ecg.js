@@ -64,7 +64,7 @@ const groupData = (channels: any) => {
     // calibrateDate(channels)
 
     // get the max and min of each channel
-    const baseline = 1000
+    const baseline = 1250
 
     // Take 1st quarter of A lead & append to group W
     // Take 2nd quarter of B lead & append to group W
@@ -137,7 +137,7 @@ const normalizeData = (newLeads: any) => {
 
     const normalizeTime = (sequence: number[]) => {
         // Normalize data points from 0 to duration (s)
-        const ratio = Math.max(...sequence) / 11
+        const ratio = Math.max(...sequence) / 10
         const normalized = sequence.map((value: number) => {
             return value / ratio
         })
@@ -151,7 +151,7 @@ const normalizeData = (newLeads: any) => {
 
         for (const value in sequence) {
             normalized.push(
-                (2 * (sequence[value] - Math.min(...sequence))) / (Math.max(...sequence) - Math.min(...sequence)) - 1
+                (2.5 * (sequence[value] - Math.min(...sequence))) / (Math.max(...sequence) - Math.min(...sequence)) - 1
             )
         }
 

@@ -10,12 +10,12 @@ interface electrocardiogramData {
 // Remove dependency to external XML parser
 
 const documentParser = (xml: string | Buffer): electrocardiogramData => {
+    const xmlString = xml.toString()
     let xmlOjbect: any
 
-    xml2js.parseString(xml.toString(), (error, document) => {
+    xml2js.parseString(xmlString, (error, document) => {
         if (error) {
             throw error
-
         }
         xmlOjbect = document
     })
@@ -24,31 +24,30 @@ const documentParser = (xml: string | Buffer): electrocardiogramData => {
     let channels: { [key: string]: number[] } | any = {}
 
     const GE = () => {
-        const name = xmlOjbect?.sapphire?.dcarRecord[0]?.patientInfo[0]?.name[0]
 
-        const { given, family } = name
+        console.log(xmlOjbect?.sapphire?.dcarRecord?.[0]?.identifier?.[0] ?? '')
     
-        barcode = xmlOjbect?.sapphire?.dcarRecord[0]?.patientInfo[0]?.identifier[0]?.id[0]?.$?.V || family
+        barcode = xmlOjbect?.sapphire?.dcarRecord?.[0]?.patientInfo?.[0]?.identifier?.[0]?.id?.[0]?.$?.V ?? ''
     
-        const waveforms = xmlOjbect?.sapphire?.dcarRecord[0]?.patientInfo[0]?.visit[0]?.order[0]?.ecgResting[0]?.params[0]?.ecg[0]?.wav[0]?.ecgWaveformMXG[0]?.ecgWaveform
+        const waveforms = xmlOjbect?.sapphire?.dcarRecord?.[0]?.patientInfo?.[0]?.visit?.[0]?.order?.[0]?.ecgResting?.[0]?.params?.[0]?.ecg?.[0]?.wav?.[0]?.ecgWaveformMXG?.[0]?.ecgWaveform
     
         waveforms.map((waveform: { [key: string]: { [key: string]: string } }) => {
             const { lead, asizeVT, VT, label, V }: { [key: string]: string } = waveform.$
-            // Convert sequence of data points encapsulated in a single string into an array of numbers
             const dataPoints = V.split(' ').map((v: string) => parseFloat(v))
+            
             channels[lead] = dataPoints
         })
     }
     
-    const Mindray = () => {
-        const waveforms = xmlOjbect?.AnnotatedECG?.component[0]?.series[0]?.component[0]?.sequenceSet[0]?.component
+    const HL7_FDA = () => {
+        const waveforms = xmlOjbect?.AnnotatedECG?.component?.[0]?.series?.[0]?.component?.[0]?.sequenceSet?.[0]?.component
 
-        barcode = xmlOjbect?.AnnotatedECG?.componentOf[0]?.timepointEvent[0]?.componentOf[0]?.subjectAssignment[0]?.subject[0]?.trialSubject[0]?.subjectDemographicPerson[0]?.PatientID[0] ?? 'NO_BARCODE'
-        
+        barcode = xmlOjbect?.AnnotatedECG?.componentOf?.[0]?.timepointEvent?.[0]?.componentOf?.[0]?.subjectAssignment?.[0]?.subject?.[0]?.trialSubject?.[0]?.subjectDemographicPerson?.[0]?.PatientID?.[0] ?? 'NO_BARCODE'
+
         waveforms.map((waveform: any) => {
-            const { code, value } = waveform?.sequence[0]
-            const label = code[0]?.$?.code ?? ''
-            const dataPointsString = value[0]?.digits
+            const { code, value } = waveform?.sequence?.[0]
+            const label = code?.[0]?.$?.code ?? ''
+            const dataPointsString = value?.[0]?.digits
 
             const leadDictionary = {
                 MDC_ECG_LEAD_I: 'I',
@@ -68,18 +67,19 @@ const documentParser = (xml: string | Buffer): electrocardiogramData => {
 
             // check size of dataPointsString
             if (dataPointsString) {
-                const dataPoints = dataPointsString[0].split(' ').map((v: string) => parseFloat(v))
+                const dataPoints = dataPointsString?.[0].split(' ').map((v: string) => parseFloat(v))
                 channels[leadDictionary[label]] = dataPoints
             }
-
         })
+    }
 
-
-        
+    const Philips = () => {
 
     }
 
-    Mindray()
+    if (xmlString.includes('MAC800')) GE()
+    if (xmlString.includes('urn:hl7-org:v3')) HL7_FDA()
+    if (xmlString.includes('Philips')) Philips()
 
     return { barcode, channels }
 }
