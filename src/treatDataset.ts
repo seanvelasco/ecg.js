@@ -1,10 +1,11 @@
+import downsample from '@seanvelasco/lttb'
 
 // Philips ECG needs reconstitution
 // Channels depend on the shape of other channels
 
 const reconstituteData = (channels: { [key: string]: number[] }) => {
 
-    const { I, II, III, AVR, AVL, AVF, V1, V2, V3, V4, V5, V6 } = channels
+    let { I, II, III, AVR, AVL, AVF, V1, V2, V3, V4, V5, V6 } = channels
 
     // Lead III
     for (let i = 0; i < III.length; i++) {
@@ -25,7 +26,6 @@ const reconstituteData = (channels: { [key: string]: number[] }) => {
     for (let i = 0; i < AVF.length; i++) {
         AVF[i] = (II[i] + III[i]) / 2 - AVF[i]
     }
-
 }
 
 
@@ -60,11 +60,25 @@ const reconstituteData = (channels: { [key: string]: number[] }) => {
 // If this is not taken into account, some parts of the wave will appear smaller and some bigger
 
 const groupData = (channels: any) => {
-    const { I, II, III, AVR, AVL, AVF, V1, V2, V3, V4, V5, V6 } = channels
+    let { I, II, III, AVR, AVL, AVF, V1, V2, V3, V4, V5, V6 } = channels
+
+    // let newArr = []
+
+    // for (let i in channels) {
+    //     // add to newArr
+    //     newArr.push(downsample(channels[i], 1000))
+    // }
+
+    // newArr = downsample(newArr, 25)
+
+    // let [I, II, III, AVR, AVL, AVF, V1, V2, V3, V4, V5, V6] = newArr
+
+    // console.log(I)
     // calibrateDate(channels)
 
     // get the max and min of each channel
-    const baseline = 1250
+
+    const baseline = 250
 
     // Take 1st quarter of A lead & append to group W
     // Take 2nd quarter of B lead & append to group W
@@ -82,6 +96,7 @@ const groupData = (channels: any) => {
         ...V4.slice((V4.length / 4) * 3, (V4.length / 4) * 4)
     ]
 
+    
     const group2 = [
         ...II.slice(0, II.length / 4),
         -baseline, baseline,
@@ -134,7 +149,6 @@ const groupData = (channels: any) => {
 // Base it instead from the document's set amplitude + padding
 const normalizeData = (newLeads: any) => {
 
-
     const normalizeTime = (sequence: number[]) => {
         // Normalize data points from 0 to duration (s)
         const ratio = Math.max(...sequence) / 10
@@ -151,12 +165,10 @@ const normalizeData = (newLeads: any) => {
 
         for (const value in sequence) {
             normalized.push(
-                (2.5 * (sequence[value] - Math.min(...sequence))) / (Math.max(...sequence) - Math.min(...sequence)) - 1
+                (2 * (sequence[value] - Math.min(...sequence))) / (Math.max(...sequence) - Math.min(...sequence)) - 1
             )
         }
-
         // normalize between 
-
         return normalized
     }
 
@@ -188,7 +200,6 @@ const normalizeData = (newLeads: any) => {
     })
 
     return normalizedWaveform
-
 }
 
 export {

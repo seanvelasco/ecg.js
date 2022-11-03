@@ -21,7 +21,7 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 	// Theming
 
 	const lineColor = '#000000'
-	const lineWidth = 0.5
+	const lineWidth = 0.75 // 0.5
 	const minorGridColor = '#ffbfc0'
 	const majorGridColor = '#ff7f7f'
 	const minorGridWidth = 0.5
@@ -73,8 +73,6 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 	const { document } = new JSDOM('').window
 
 	const body = d3.select(document).select('body')
-
-	
 
 	const svg = body
 		.append('svg')
@@ -183,6 +181,8 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 	const generateLines = () => {
 		for (const lead of range(rows)) {
 			const displacement = lead * (3 * cm) * pixels
+
+			// this dispalces the chart
 			for (const point in data[lead]) {
 				data[lead][point][1] -= displacement
 			}
@@ -191,6 +191,7 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 				.line()
 				.x((d: [number, number]) => xScale(d[0]))
 				.y((d: [number, number]) => yScale(d[1]))
+				
 			svg
 				.append('path')
 				.attr('d', line(data[lead]))

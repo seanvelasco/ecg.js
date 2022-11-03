@@ -5,7 +5,6 @@ interface electrocardiogramData {
     channels: { [key: string]: number[] }
 }
 
-
 // This function is due for a refactor
 // Remove dependency to external XML parser
 
@@ -26,19 +25,19 @@ const documentParser = (xml: string | Buffer): electrocardiogramData => {
     const GE = () => {
 
         console.log(xmlOjbect?.sapphire?.dcarRecord?.[0]?.identifier?.[0] ?? '')
-    
+
         barcode = xmlOjbect?.sapphire?.dcarRecord?.[0]?.patientInfo?.[0]?.identifier?.[0]?.id?.[0]?.$?.V ?? ''
-    
+
         const waveforms = xmlOjbect?.sapphire?.dcarRecord?.[0]?.patientInfo?.[0]?.visit?.[0]?.order?.[0]?.ecgResting?.[0]?.params?.[0]?.ecg?.[0]?.wav?.[0]?.ecgWaveformMXG?.[0]?.ecgWaveform
-    
+
         waveforms.map((waveform: { [key: string]: { [key: string]: string } }) => {
             const { lead, asizeVT, VT, label, V }: { [key: string]: string } = waveform.$
-            const dataPoints = V.split(' ').map((v: string) => parseFloat(v))
-            
+            let dataPoints: any = V.split(' ').map((v: string) => parseFloat(v))
+
             channels[lead] = dataPoints
         })
     }
-    
+
     const HL7_FDA = () => {
         const waveforms = xmlOjbect?.AnnotatedECG?.component?.[0]?.series?.[0]?.component?.[0]?.sequenceSet?.[0]?.component
 
