@@ -3,6 +3,7 @@ import xml2js from 'xml2js'
 interface electrocardiogramData {
     barcode: string
     channels: { [key: string]: number[] }
+    measurements: { [key: string]: string | number }
 }
 
 // This function is due for a refactor
@@ -22,13 +23,32 @@ const documentParser = (xml: string | Buffer): electrocardiogramData => {
     let barcode
     let channels: { [key: string]: number[] } | any = {}
 
-    const GE = () => {
+    const measurements = {}
 
-        console.log(xmlOjbect?.sapphire?.dcarRecord?.[0]?.identifier?.[0] ?? '')
+    const GE = () => {
 
         barcode = xmlOjbect?.sapphire?.dcarRecord?.[0]?.patientInfo?.[0]?.identifier?.[0]?.id?.[0]?.$?.V ?? ''
 
         const waveforms = xmlOjbect?.sapphire?.dcarRecord?.[0]?.patientInfo?.[0]?.visit?.[0]?.order?.[0]?.ecgResting?.[0]?.params?.[0]?.ecg?.[0]?.wav?.[0]?.ecgWaveformMXG?.[0]?.ecgWaveform
+
+        const numericalValues = xmlOjbect?.sapphire?.dcarRecord?.[0]?.patientInfo?.[0]?.visit?.[0]?.order?.[0]?.ecgResting?.[0]?.params?.[0]?.ecg?.[0]?.num?.[0]
+
+        const measurementValues = xmlOjbect?.sapphire?.dcarRecord?.[0]?.patientInfo?.[0]?.visit?.[0]?.order?.[0]?.ecgResting?.[0]?.params?.[0]?.ecg?.[0]?.var?.[0]?.medianTemplate[0]?.measurements[0]?.global[0]
+    
+        for (const numericalValue in measurementValues) {
+
+            const { V, U, INV } = measurementValues[numericalValue][0].$
+
+            measurements[numericalValue] = V
+
+        }
+
+        for (const numericalValue in numericalValues) {
+
+            const { V, U, INV } = numericalValues[numericalValue][0].$
+
+            measurements[numericalValue] = V
+        }
 
         waveforms.map((waveform: { [key: string]: { [key: string]: string } }) => {
             const { lead, asizeVT, VT, label, V }: { [key: string]: string } = waveform.$
@@ -80,7 +100,7 @@ const documentParser = (xml: string | Buffer): electrocardiogramData => {
     if (xmlString.includes('urn:hl7-org:v3')) HL7_FDA()
     if (xmlString.includes('Philips')) Philips()
 
-    return { barcode, channels }
+    return { barcode, channels, measurements }
 }
 
 export {
