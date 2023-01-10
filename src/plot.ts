@@ -11,14 +11,6 @@ const arrange = (start: number, stop: number, step: number) => {
 }
 
 const plot = (data: [number, number][][], labels?: string[], barcode?: string) => {
-	// The length labels array should take precedence over the length of the data array
-	// This is because a 12-channel ECG may have 16 channels, but will only have data for 12 channels
-
-	const rows = 4 // labels?.length || data.length
-
-	// Revert to default if no labels are given
-
-	// Theming
 
 	const lineColor = '#000000'
 	const lineWidth = 0.75 // 0.5
@@ -31,24 +23,13 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 	const textSize = '0.75em'
 	const textFont = 'sans-serif'
 
-	// Page dimensions
+	const DPI = 120
+	const height = (30 * DPI) / 25.4
+	const width = (250 * DPI) / 25.4
 
-	const cm = 1 / 2.54
-	const pixels = 96
 
-	const height = 3 * cm * pixels * rows
-	const width = 27.5 * cm * pixels
 
-	// Viewport
 
-	const yMax = 1.5 * cm * pixels
-	const yMin = yMax - yMax * (rows * 2)
-
-	const xMax = 11 * cm * pixels
-	const xMin = 0
-
-	// Grid arrays
-	// Due for a refactor, arrange() is expensive
 
 	const xMajorTicks = arrange(xMin, xMax, 0.2 * cm * pixels)
 	const yMajorTicks = arrange(yMin, yMax, 0.5 * cm * pixels)
@@ -82,7 +63,7 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 		.attr('height', height)
 		.attr('style', `border: ${borderWidth / 2}px solid ${majorGridColor};`) // Outer border
 		.attr('shape-rendering', "crispEdges")
-		
+
 	// add rect
 	svg.append('rect')
 		.attr('width', width)
@@ -191,7 +172,7 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 				.line()
 				.x((d: [number, number]) => xScale(d[0]))
 				.y((d: [number, number]) => yScale(d[1]))
-				
+
 			svg
 				.append('path')
 				.attr('d', line(data[lead]))
