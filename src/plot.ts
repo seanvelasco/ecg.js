@@ -1,14 +1,5 @@
 import jsdom from 'jsdom'
 import * as d3 from 'd3'
-import { range } from 'd3'
-
-const arrange = (start: number, stop: number, step: number) => {
-	const arr: number[] = []
-	for (let i = start; i < stop; i += step) {
-		arr.push(i)
-	}
-	return arr
-}
 
 const plot = (data: [number, number][][], labels?: string[], barcode?: string) => {
 
