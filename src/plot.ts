@@ -27,25 +27,13 @@ const plot = (data: [number, number][][], labels?: string[], barcode?: string) =
 	const height = (30 * DPI) / 25.4
 	const width = (250 * DPI) / 25.4
 
-
-
-
-
-	const xMajorTicks = arrange(xMin, xMax, 0.2 * cm * pixels)
-	const yMajorTicks = arrange(yMin, yMax, 0.5 * cm * pixels)
-
-	const xMinorTicks = arrange(xMin, xMax, 0.04 * cm * pixels)
-	const yMinorTicks = arrange(yMin, yMax, 0.1 * cm * pixels)
-
-	// Scales
-
-	const xScale = d3.scaleLinear().domain([xMin, xMax]).range([0, width])
+	const xScale = d3.scaleLinear().range([0, width]).domain([0, 5000])
 
 	// SVG y-coordinates start at the top then increases in value going down
 	// The range OR domain, therefore, should be reversed
 	// Otherwise, the line will be inverted in the y-axis
 
-	const yScale = d3.scaleLinear().domain([yMin, yMax]).range([height, 0])
+	const yScale = d3.scaleLinear().range([height, 0]).domain([-300, 300])
 
 	// DOM creation
 
