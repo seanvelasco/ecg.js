@@ -85,7 +85,9 @@ const groupData = (channels: any) => {
 
     const group4 = [...II]
 
-    return [group1, group2, group3, group4]
+    return [group1.map((d, i) => [i, d]), group2.map((d, i) => [i, d]), group3.map((d, i) => [i, d]), group4.map((d, i) => [i, d])]
+
+    // return [group1, group2, group3, group4]
 }
 
 // Normalization

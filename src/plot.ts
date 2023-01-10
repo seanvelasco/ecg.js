@@ -1,7 +1,7 @@
 import { JSDOM } from 'jsdom'
 import * as d3 from 'd3'
 
-const plot = (data: [number, number][][], labels?: string[], barcode?: string) => {
+const plot = (data: any, labels?: string[], barcode?: string) => {
 
 	const lineColor = '#000000'
 	const lineWidth = 0.75

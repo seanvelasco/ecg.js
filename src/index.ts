@@ -13,29 +13,30 @@ class ECG {
 
         const { barcode, channels } = waveforms
 
-        if (options.downsample) { }
+        // if (options.downsample) { }
 
-        if (options.reconstitue) {
-            reconstituteData(channels)
-        }
+        // if (options.reconstitue) {
+        //     reconstituteData(channels)
+        // }
 
         this.barcode = barcode
         this.channels = channels
     }
 
-    plot = async (format: 'svg' | 'jpeg' | 'png' | 'pdf' | 'webp' = 'png', options?: { grid?: string, line?: string, rows: number, columns: number }): Promise<Buffer> => {
+    plot = (format: 'svg' | 'jpeg' | 'png' | 'pdf' | 'webp' = 'png', options?: { grid?: string, line?: string, rows: number, columns: number }): Buffer | string => {
 
         const groupedLeads = groupData(this.channels)
 
-        const normaalizedData = normalizeData(groupedLeads)
+        // const normaalizedData = normalizeData(groupedLeads)
 
-        const image = plot(normaalizedData, [], this.barcode)
 
-        if (format !== 'svg') {
-            return await sharp(Buffer.from(image), { density: 500 }).toFormat(format).toBuffer()
-        }
+        const image = plot(groupedLeads, [], this.barcode)
 
-        return Buffer.from(image)
+        // if (format !== 'svg') {
+        //     return await sharp(Buffer.from(image), { density: 500 }).toFormat(format).toBuffer()
+        // }
+
+        return image
     }
 }
 
