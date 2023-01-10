@@ -62,71 +62,28 @@ const reconstituteData = (channels: { [key: string]: number[] }) => {
 const groupData = (channels: any) => {
     let { I, II, III, AVR, AVL, AVF, V1, V2, V3, V4, V5, V6 } = channels
 
-    // let newArr = []
-
-    // for (let i in channels) {
-    //     // add to newArr
-    //     newArr.push(downsample(channels[i], 1000))
-    // }
-
-    // newArr = downsample(newArr, 25)
-
-    // let [I, II, III, AVR, AVL, AVF, V1, V2, V3, V4, V5, V6] = newArr
-
-    // console.log(I)
-    // calibrateDate(channels)
-
-    // get the max and min of each channel
-
-    const baseline = 250
-
-    // Take 1st quarter of A lead & append to group W
-    // Take 2nd quarter of B lead & append to group W
-    // Take 3rd quarter of C lead & append to group W
-    // Take 4th quarter of D lead & append to group W
-    // Repeat for all leads of groups X, Y, Z
-
     const group1 = [
         ...I.slice(0, I.length / 4),
-        -baseline, baseline,
         ...AVR.slice(AVR.length / 4, (AVR.length / 4) * 2),
-        -baseline, baseline,
         ...V1.slice((V1.length / 4) * 2, (V1.length / 4) * 3),
-        -baseline, baseline,
         ...V4.slice((V4.length / 4) * 3, (V4.length / 4) * 4)
     ]
 
-    
     const group2 = [
         ...II.slice(0, II.length / 4),
-        -baseline, baseline,
         ...AVL.slice(II.length / 4, (II.length / 4) * 2),
-        -baseline, baseline,
         ...V2.slice((II.length / 4) * 2, (II.length / 4) * 3),
-        -baseline, baseline,
         ...V5.slice((II.length / 4) * 3, (II.length / 4) * 4)
     ]
 
     const group3 = [
         ...III.slice(0, III.length / 4),
-        -baseline, baseline,
         ...AVF.slice(III.length / 4, (III.length / 4) * 2),
-        -baseline, baseline,
         ...V3.slice((III.length / 4) * 2, (III.length / 4) * 3),
-        -baseline, baseline,
         ...V6.slice((III.length / 4) * 3, (III.length / 4) * 4)
     ]
 
-    // what is the largest number in group 3
-
-    // const group3Max = Math.max(...group3)
-    // const group3Min = Math.min(...group3)
-
-    // introduce a minimum and maximum to II
-    const group4 = [baseline, -baseline, ...II]
-
-
-    // const group4 = II
+    const group4 = [...II]
 
     return [group1, group2, group3, group4]
 }
@@ -146,7 +103,7 @@ const groupData = (channels: any) => {
 // A channel with 5000 data points has a duration of 5000 ms or 5 s
 
 // Do not base the upper and lower bounds based off the channel's min and max
-// Base it instead from the document's set amplitude + padding
+// Base it instead from the document's set amplitude
 const normalizeData = (newLeads: any) => {
 
     const normalizeTime = (sequence: number[]) => {
