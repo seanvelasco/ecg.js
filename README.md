@@ -12,26 +12,30 @@ npm install @seanvelasco/ecg
 import ECG from "@seanvelasco/ecg"
 import fs from 'fs'
 
-// Path to ECG XML file
-// See supported XML formats below
-const file = fs.readFileSync("path/to/ecg.xml")
+const xmlFile = fs.readFileSync("ecg.xml")
 
-const ecg = new ECG(file.toString())
+const ecg = new ECG(xmlFile)
 
-const svgImage = await ecg.plot('svg')
+const image = ecg.plot()
 
-const jpegImage = await ecg.plot('jpeg')
+fs.writeFileSync("image.svg", image)
+
 ```
 
-### Supported XML formats
+
+## Parsing different XML formats
 
 - Philips XML
 - Mindray MR XML
 - GE MUSE XML
 - HL7 FDA
 
-### Supported elecrocardiograms
+## Preparing the data
 
-- Philips PageWriter series
-- Mindray BeneHeart series
-- GE MAC series
+- reconstitute
+
+- normalize
+
+- downsample
+
+## Plotting the data

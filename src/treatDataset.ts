@@ -90,22 +90,7 @@ const groupData = (channels: any) => {
     // return [group1, group2, group3, group4]
 }
 
-// Normalization
 
-// This makes the parser universal
-// No matter the scale, all channels will be normalized accoding to their amplitude and duration
-// GE and Philips data points will have varying scale, but both will be scaled according to the electrocaradiogram's gain and duration
-
-// Example: sampleRate = 50 Hz, gain = 25 mV/s, duration = 11s
-// Horizontal axis will range from 0 to 11s
-// Vertical axis will from -25 mV to 25 mV
-
-// Notes:
-// A way to determine the duration is to determine the size/length of the channel array
-// A channel with 5000 data points has a duration of 5000 ms or 5 s
-
-// Do not base the upper and lower bounds based off the channel's min and max
-// Base it instead from the document's set amplitude
 const normalizeData = (newLeads: any) => {
 
     const normalizeTime = (sequence: number[]) => {
