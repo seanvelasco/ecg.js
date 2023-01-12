@@ -1,9 +1,13 @@
-import downsample from '@seanvelasco/lttb'
+// import downsample from '@seanvelasco/lttb'
 
 // Philips ECG needs reconstitution
 // Channels depend on the shape of other channels
 
-const reconstituteData = (channels: { [key: string]: number[] }) => {
+const downsample = (channels: { [key: string]: number[] }) => {
+
+}
+
+const reconstitue = (channels: { [key: string]: number[] }) => {
 
     let { I, II, III, AVR, AVL, AVF, V1, V2, V3, V4, V5, V6 } = channels
 
@@ -91,63 +95,13 @@ const groupData = (channels: any) => {
 }
 
 
-const normalizeData = (newLeads: any) => {
+const normalize = (newLeads: any) => {
 
-    const normalizeTime = (sequence: number[]) => {
-        // Normalize data points from 0 to duration (s)
-        const ratio = Math.max(...sequence) / 10
-        const normalized = sequence.map((value: number) => {
-            return value / ratio
-        })
-        return normalized
-    }
-
-    const normalizeAmplitude = (sequence: number[]) => {
-        const normalized: number[] = []
-
-        // Normalize between -2 mV and 2mV
-
-        for (const value in sequence) {
-            normalized.push(
-                (2 * (sequence[value] - Math.min(...sequence))) / (Math.max(...sequence) - Math.min(...sequence)) - 1
-            )
-        }
-        // normalize between 
-        return normalized
-    }
-
-    const waveform = newLeads.map((lead: number[]) => {
-        // Time variable is just the index
-        const waveformArray = lead.map((value: number, time: number) => {
-            if (isNaN(value)) {
-                return [time, 0]
-            }
-            return [time, value]
-        })
-
-        return waveformArray
-    })
-
-    const normalizedWaveform: [number, number][][] = waveform.map((channel: number[][]) => {
-        const time = channel.map((value) => value[0])
-        const amplitude = channel.map((value) => value[1])
-
-        const normalizedTime = normalizeTime(time)
-        const normalizedAmplitude = normalizeAmplitude(amplitude)
-
-        const cm = 1 / 2.54
-        const pixels = 96
-
-        return normalizedTime.map((value: number, index: number) => {
-            return [value * cm * pixels, normalizedAmplitude[index] * cm * pixels]
-        })
-    })
-
-    return normalizedWaveform
 }
 
 export {
-    reconstituteData,
-    groupData,
-    normalizeData
+    reconstitue,
+    downsample,
+    normalize,
+    groupData
 }

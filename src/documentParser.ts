@@ -34,7 +34,7 @@ const documentParser = (xml: string | Buffer): electrocardiogramData => {
         const numericalValues = xmlOjbect?.sapphire?.dcarRecord?.[0]?.patientInfo?.[0]?.visit?.[0]?.order?.[0]?.ecgResting?.[0]?.params?.[0]?.ecg?.[0]?.num?.[0]
 
         const measurementValues = xmlOjbect?.sapphire?.dcarRecord?.[0]?.patientInfo?.[0]?.visit?.[0]?.order?.[0]?.ecgResting?.[0]?.params?.[0]?.ecg?.[0]?.var?.[0]?.medianTemplate[0]?.measurements[0]?.global[0]
-    
+
         for (const numericalValue in measurementValues) {
 
             const { V, U, INV } = measurementValues[numericalValue][0].$
