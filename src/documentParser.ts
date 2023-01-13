@@ -1,5 +1,231 @@
 import xml2js from 'xml2js'
 
+class Code {
+
+    code: any
+    value: any
+
+    constructor(code: any, value: any) {
+        this.code = code;
+        this.value = Array.isArray(value) ? value.slice() : [value];
+    }
+    appendTo(output: any) {
+        for (let i = 0; i < this.value.length; ++i) {
+            output.push(this.value[i]);
+        }
+        return output;
+    }
+}
+
+class LZWReader {
+    offset = 0
+    bits = 10 || 16
+    // let maxCode = Math.pow(2, bits) - 1
+    maxCode = (1 << this.bits) - 2
+    chunkSize = Math.floor(8 * 1024 / this.bits)
+    bitCount = 0
+    buffer = 0
+    previous = []
+    nextCode = 256
+    strings = {}
+    data: Buffer
+
+    output = []
+    codesRead = 0
+    goingNext = false
+
+
+
+    constructor(data: Buffer) {
+        this.data = data;
+        //console.log('compressed size %d bytes', this.data.length);
+        for (let i = 0; i < this.nextCode; ++i) {
+            this.strings[i] = new Code(i, i);
+        }
+
+    }
+
+
+    readCode() {
+        let EOF = false;
+        while (this.bitCount <= 24) {
+            if (this.offset >= this.data.length) {
+                EOF = true
+                break
+            }
+            let next = this.data[this.offset++]
+            this.buffer |= ((next & 0xFF) << (24 - this.bitCount)) & 0xFFFFFFFF;
+            this.bitCount += 8;
+        }
+        if (EOF && this.bitCount < this.bits) {
+            return -1
+        }
+        else {
+            let code = ((this.buffer >>> (32 - this.bits)) & 0x0000FFFF)
+            this.buffer = (((this.buffer & 0xFFFFFFFF) << this.bits) & 0xFFFFFFFF)
+            this.bitCount -= this.bits;
+            // console.log(this.bitCount)
+            return code
+        }
+    }
+
+    decode(callback) {
+        let code
+        let value
+        let output = []
+        let codesRead = 0
+        let goingNext = false
+        const next = () => {
+            goingNext = false
+            while (-1 !== (code = this.readCode())) {
+                if (code > this.maxCode) {
+                    //throw new Error('Invalid code')
+                    break
+                }
+                if (!this.strings.hasOwnProperty(code)) {
+                    value = this.previous.slice()
+                    value.push(this.previous[0])
+                    this.strings[code] = new Code(code, value)
+                }
+
+                output = this.strings[code].appendTo(output)
+
+                if (this.previous.length > 0 && this.nextCode <= this.maxCode) {
+                    value = this.previous.slice()
+                    value.push(this.strings[code].value[0])
+                    let nc = this.nextCode++
+                    this.strings[nc] = new Code(nc, value)
+                }
+                this.previous = this.strings[code].value
+
+                codesRead++
+
+                if (codesRead >= this.chunkSize) {
+                    goingNext = true
+                    codesRead = 0
+                    break
+                }
+
+            }
+
+            if (!goingNext) {
+                process.nextTick(() => {
+                    return callback(null, Buffer.from(output))
+                })
+            }
+            else {
+                setImmediate(next)
+            }
+        }
+        return next()
+
+    }
+}
+
+class XLIReader {
+
+    offset = 0
+    input: Buffer
+
+    constructor(input: Buffer) {
+        this.input = input
+    }
+
+    private decodeDeltas(deltas: any, lastValue: any): any {
+        let values = deltas.slice()
+        let x = values[0]
+        let y = values[1]
+        for (let i = 2; i < values.length; i++) {
+            let z = (y * 2) - x - lastValue
+            lastValue = values[i] - 64
+            values[i] = z
+            x = y
+            y = z
+        }
+        return values
+    }
+
+    private unpack(data: Buffer, callback): any {
+        // console.log('bytes', data)
+        ///console.log(data)
+        const unpack = () => {
+            const unpacked = new Array(Math.floor(data.length / 2))
+            for (let i = 0; i < unpacked.length; i++) { // BRUH WTFFFFFFFFF
+                unpacked[i] = (((data[i] << 8) | data[i + unpacked.length]) << 16) >> 16;
+            }
+            return unpacked;
+        }
+
+        process.nextTick(() => {
+            let upacked = unpack()
+            process.nextTick(() => {
+                return callback(null, upacked)
+            })
+        })
+    }
+
+    // const unpacked = new Array(Math.floor(data.length / 2))
+    // for (let i = 0; i < data.length; i ++) {
+    //     unpacked[i] = (((data[i] << 8) | data[i + unpacked.length]) << 16) >> 16;
+    // }
+    // return unpacked;
+
+    private readChunk(callback) {
+        let header = this.input.slice(this.offset + 0, this.offset + 8)
+        let size = header.readInt32LE(0) // chuck size
+        let code = header.readInt16LE(4)
+        let delta = header.readInt16LE(6)
+        let compressedBlock = this.input.slice(this.offset + 8, this.offset + 8 + size)
+        let reader = new LZWReader(compressedBlock)
+        reader.decode((error, data) => {
+            if (error) {
+                return callback(error)
+            }
+            else {
+                this.unpack(data, (error, unpacked) => {
+                    if (error) {
+                        return callback(error)
+                    }
+                    else {
+                        let values = this.decodeDeltas(unpacked, delta)
+                        process.nextTick(() => {
+                            return callback(null, { size: header.length + compressedBlock.length, values })
+                        })
+                    }
+                })
+            }
+        })
+
+    }
+
+
+    extractLeads(callback) {
+        let leads = []
+        const next = () => {
+            if (this.offset < this.input.length) {
+
+                this.readChunk((error, chunk) => {
+                    if (error) {
+                        return callback(error)
+                    }
+                    else {
+                        leads.push(chunk.values)
+                        this.offset += chunk.size
+                        setImmediate(next)
+                    }
+                })
+            }
+            else {
+                process.nextTick(() => {
+                    return callback(null, leads)
+                })
+            }
+
+        }
+        return next()
+    }
+}
+
 interface electrocardiogramData {
     barcode: string
     channels: { [key: string]: number[] }
@@ -92,14 +318,242 @@ const documentParser = (xml: string | Buffer): electrocardiogramData => {
         })
     }
 
+    let hehehe
+
     const Philips = () => {
 
+        const waveformData = xmlOjbect.restingecgdata.waveforms[0].parsedwaveforms[0]._
+
+        const buf = Buffer.from(waveformData, 'base64')
+
+        class Code {
+            code: number
+            value: string[]
+
+            constructor(code: number, value: string | string[]) {
+                this.code = code
+
+                if (Array.isArray(value)) {
+                    this.value = value.slice()
+                } else {
+                    this.value = [value]
+                }
+            }
+
+            append(output: string[]): string[] {
+                for (const index in this.value) {
+                    output.push(this.value[index])
+                }
+                return output
+            }
+        }
+
+        class LZW {
+            offset = 0
+            bits = 10 || 16
+            maxCode = (1 << this.bits) - 2
+            chunkSize = Math.floor((8 * 1024) / this.bits)
+            bitCount = 0
+            buffer = 0
+            previous: string[] = []
+            nextCode = 256
+            strings: { [key: string]: Code } = {}
+            data: Buffer
+            output = []
+            codesRead = 0
+            goingNext = false
+
+            constructor(data: Buffer) {
+                this.data = data
+                for (let i = 0; i < this.nextCode; ++i) {
+                    this.strings[i] = new Code(i, String(i))
+                }
+            }
+
+            private readCode() {
+                let EOF = false
+
+                while (this.bitCount <= 24) {
+                    if (this.offset >= this.data.length) {
+                        EOF = true
+                        break
+                    }
+                    const next = this.data[this.offset++]
+                    this.buffer |= ((next & 0xff) << (24 - this.bitCount)) & 0xffffffff
+                    this.bitCount += 8
+                }
+
+                if (EOF && this.bitCount < this.bits) {
+                    return -1
+                }
+
+                const code = (this.buffer >>> (32 - this.bits)) & 0x0000ffff
+                this.buffer = ((this.buffer & 0xffffffff) << this.bits) & 0xffffffff
+                this.bitCount = this.bitCount - this.bits
+                return code
+            }
+
+            decode() {
+                let code: number
+                let value: string[]
+                let output = [] // Types not agreeing
+                let decoding = true
+
+                // Due for a rafactor/re-write
+                // Prone to an infinite loop
+
+                // Script below needs to exit after x exceeds y
+                // However, the loop is never exited
+                // But waits until code > maxCode is reached
+                // Contributes 500ms scripting time at most
+
+                while (decoding === true) {
+                    const condition = true
+                    while (condition) {
+                        code = this.readCode()
+                        if (code > this.maxCode) {
+                            decoding = false
+                            break
+                        }
+                        if (!Object.prototype.hasOwnProperty.call(this.strings, code)) {
+                            value = this.previous.slice()
+                            value.push(this.previous[0])
+                            this.strings[code] = new Code(code, value)
+                        }
+
+                        output = this.strings[code].append(output)
+
+                        if (this.previous.length > 0 && this.nextCode <= this.maxCode) {
+                            value = this.previous.slice()
+                            value.push(this.strings[code].value[0])
+                            const nc = this.nextCode++
+                            this.strings[nc] = new Code(nc, value)
+                        }
+                        this.previous = this.strings[code].value
+                    }
+                }
+                return Buffer.from(output) // Types not agreeing
+            }
+        }
+
+        class XLI {
+            offset = 0
+            input: Buffer
+
+            constructor(input: Buffer) {
+                this.input = input
+            }
+
+            private decodeDeltas(deltas: number[], lastValue: number): number[] {
+                const values = deltas.slice()
+                let x = values[0]
+                let y = values[1]
+                for (let i = 2; i < values.length; i++) {
+                    const z = y * 2 - x - lastValue
+                    lastValue = values[i] - 64
+                    values[i] = z
+                    x = y
+                    y = z
+                }
+                return values
+            }
+
+            private unpack(data: Buffer): number[] {
+                const unpacked = new Array(Math.floor(data.length / 2))
+
+                for (let i = 0; i < unpacked.length; i++) {
+                    unpacked[i] = (((data[i] << 8) | data[i + unpacked.length]) << 16) >> 16
+                }
+                return unpacked
+            }
+
+            private readChunk() {
+                const header = this.input.slice(this.offset + 0, this.offset + 8)
+                const size = header.readInt32LE(0) // chuck size
+                // const code = header.readInt16LE(4)
+                const delta = header.readInt16LE(6)
+                const compressedBlock = this.input.slice(this.offset + 8, this.offset + 8 + size)
+                const reader = new LZW(compressedBlock)
+                const syncdecode = reader.decode()
+                const unpacked = this.unpack(syncdecode)
+                const values = this.decodeDeltas(unpacked, delta)
+                return { size: header.length + compressedBlock.length, values }
+            }
+            decode() {
+                const leads: number[][] = []
+
+                while (this.offset < this.input.length) {
+                    const chunk = this.readChunk()
+                    leads.push(chunk.values)
+                    this.offset += chunk.size
+                }
+                return leads
+            }
+        }
+
+        const reconstitude = (series: number[][]) => {
+            const leadI = series[0]
+            const leadII = series[1]
+            const leadIII = series[2]
+            const leadAVR = series[3]
+            const leadAVL = series[4]
+            const leadAVF = series[5]
+
+            for (const index in leadIII) {
+                leadIII[index] = leadII[index] - leadI[index] - leadIII[index]
+            }
+
+            for (const index in leadAVR) {
+                leadAVR[index] = -leadAVR[index] - ((leadI[index] + leadII[index]) / 2)
+            }
+
+            for (const index in leadAVL) {
+                leadAVL[index] = (leadI[index] - leadIII[index]) / 2 - leadAVL[index]
+            }
+
+            for (const index in leadAVF) {
+                leadAVF[index] = (leadII[index] + leadIII[index]) / 2 - leadAVF[index]
+            }
+
+            return series
+        }
+
+        const decompressedWaveform = new XLI(buf).decode()
+
+        const reconstitutedWaveform = reconstitude(decompressedWaveform)
+
+        const I = reconstitutedWaveform[0]
+        const II = reconstitutedWaveform[1]
+        const III = reconstitutedWaveform[2]
+        const AVR = reconstitutedWaveform[3]
+        const AVL = reconstitutedWaveform[4]
+        const AVF = reconstitutedWaveform[5]
+        const V1 = reconstitutedWaveform[6]
+        const V2 = reconstitutedWaveform[7]
+        const V3 = reconstitutedWaveform[8]
+        const V4 = reconstitutedWaveform[9]
+        const V5 = reconstitutedWaveform[10]
+        const V6 = reconstitutedWaveform[11]
+        console.log(V3)
+        channels = {
+            I,
+            II,
+            III,
+            AVR,
+            AVL,
+            AVF,
+            V1,
+            V2,
+            V3,
+            V4,
+            V5,
+            V6
+        }
     }
 
     if (xmlString.includes('MAC800')) GE()
     if (xmlString.includes('urn:hl7-org:v3')) HL7_FDA()
     if (xmlString.includes('Philips')) Philips()
-
     return { barcode, channels, measurements }
 }
 
