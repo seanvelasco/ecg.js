@@ -16,7 +16,9 @@ const DPI = 96 // Scaling factor
 const height = (30 * DPI) / 25.4
 const width = (250 * DPI) / 25.4 / 4
 
-const plot = (data: any, order) => {
+// padding adds 
+
+const plot = (coordinateData: any, order) => {
 
 	const { document } = new JSDOM('').window // DOM creation
 
@@ -31,7 +33,6 @@ const plot = (data: any, order) => {
 		.attr('height', height * order.length)
 		.attr('shape-rendering', "crispEdges")
 		.style('fill', 'none') // Creates a line
-		.style('stroke-width', 0)
 
 	// Create a white background
 
@@ -40,16 +41,16 @@ const plot = (data: any, order) => {
 		.attr('height', '100%')
 		.attr('fill', 'white')
 
-	const xScale = d3.scaleLinear().range([0, width * 4]).domain([0, 5000]).clamp(true)
+	// GE = 5000
+	// Philips = 5500
+
+	const xScale = d3.scaleLinear().range([0, width * 4]).domain([0, 5500]).clamp(false)
 
 	// SVG y-coordinates start at the top and increases in value going down
 	// The range or domain, therefore, should be reversed
 	// Otherwise, the line will be inverted in the y-axis
 
-	const yScale = d3.scaleLinear().range([height, 0]).domain([-300, 300]).clamp(true)
-
-	const xScaleGrid = d3.scaleLinear().range([0, width * 4]).domain([0, 5000]).clamp(false)
-	const yScaleGrid = d3.scaleLinear().range([height, 0]).domain([-300, 300]).clamp(false)
+	const yScale = d3.scaleLinear().range([height, 0]).domain([-300, 300]).clamp(false)
 
 	const line = d3.line()
 		.x((d: [number, number]) => xScale(d[0]))
@@ -59,52 +60,16 @@ const plot = (data: any, order) => {
 	// Setting offset to 0 removes padding from the tick labels
 	// Setting tickFormat to an empty string removes the tick labels
 	// There should be 50 large squares horizontally
-	const xMajorGrid = d3.axisTop(xScaleGrid).ticks(50).tickSize(-height).offset(0).tickFormat(() => '')
+	const xMajorGrid = d3.axisTop(xScale).ticks(50).tickSize(-height).offset(0).tickFormat(() => '')
 
 	// There are 5 small squares across a large square, therefore there should be 250 small squares horizontally
-	const xMinorGrid = d3.axisTop(xScaleGrid).ticks(50 * 5).tickSize(-height).offset(0).tickFormat(() => '')
+	const xMinorGrid = d3.axisTop(xScale).ticks(50 * 5).tickSize(-height).offset(0).tickFormat(() => '')
 
 	// On a single channel, there should be 6 large squares vertically
-	const yMajorGrid = d3.axisLeft(yScaleGrid).ticks(6).tickSize(-width * 4).offset(0).tickFormat(() => '')
+	const yMajorGrid = d3.axisLeft(yScale).ticks(6).tickSize(-width * 4).offset(0).tickFormat(() => '')
 
 	// There are 5 small squares across a large square, therefore there should be 30 small squares vertically
-	const yMinorGrid = d3.axisLeft(yScaleGrid).ticks(6 * 5).tickSize(-width * 4).offset(0).tickFormat(() => '')
-
-	const slicedData: object[] = []
-
-	// Data grouper
-
-	for (const labels of order) {
-		const columns = labels.length
-		const temp = {}
-		let count = 0
-		for (const label of labels) {
-
-			const channel = data[label]
-			const length = channel.length
-			const slice = length / columns
-			const z = channel.slice(count * slice, (count + 1) * slice)
-
-			count++
-			temp[label] = z
-
-		}
-		slicedData.push(temp)
-	}
-	const coordinateData = []
-
-	for (const z of slicedData) {
-		const tempArr = []
-		for (const [channelLabel, channelValues] of Object.entries(z)) {
-
-			const obj = channelValues.map((y, x) => [x, y])
-			const emptyObj = {}
-			emptyObj[channelLabel] = obj
-			tempArr.push(emptyObj)
-
-		}
-		coordinateData.push(tempArr)
-	}
+	const yMinorGrid = d3.axisLeft(yScale).ticks(6 * 5).tickSize(-width * 4).offset(0).tickFormat(() => '')
 
 	for (let channel = 0; channel < order.length; channel++) {
 
@@ -153,8 +118,6 @@ const plot = (data: any, order) => {
 				.append('text')
 				.attr('x', (slice) * label)
 				.attr('y', (height / 2) + (height * channel) + 19)
-				.attr('text-anchor', 'start')
-				.attr('alignment-baseline', 'start')
 				.attr('font-size', textSize)
 				.attr('font-family', textFont)
 				.attr('fill', textColor)
