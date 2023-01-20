@@ -1,29 +1,19 @@
 import { plot } from './plot'
 import { documentParser } from './documentParser'
-
-// type Channels = {[key: string]: [number, number]}[][]
+import sharp from 'sharp'
 
 class ECG {
     barcode: string
-    channels: any
+    channels: { [key: string]: [number, number][] }[][]
     order: string[][]
 
-    constructor(xml: string, options: { downsample: number, reconstitue: boolean } = { downsample: 0, reconstitue: false }) {
+    constructor(xml: string, order: string[][], options: { downsample: number, reconstitue: boolean } = { downsample: 0, reconstitue: false }) {
 
-        this.order = [
-            ['I', 'AVR', 'V1', 'V4'],
+        this.order = order || [
+            ['I', 'AVR', 'V1', 'V5'],
             ['II', 'AVL', 'V2', 'V5'],
             ['III', 'AVF', 'V3', 'V6'],
             ['II']
-            // ['I'],
-            // ['II'],
-            // ['III'],
-            // ['AVR'],
-            // ['AVL'],
-            // ['AVF'],
-            // ['V1'],
-            // ['V2'],
-            // ['V3']            
         ]
         const waveforms = documentParser(xml)
 
@@ -31,9 +21,9 @@ class ECG {
             return dataset.map((y, x) => [x, y])
         }
 
-        const groupData = (channels: any) => {
+        const groupData = (channels: any): { [key: string]: [number, number][] }[][] => {
 
-            const slicedData: { [key: string]: number[] | [number, number][] }[][] = []
+            const slicedData: { [key: string]: [number, number][] }[][] = []
 
             for (const labels of this.order) {
                 const columns = labels.length
@@ -41,7 +31,6 @@ class ECG {
                 let count = 0
                 for (const label of labels) {
                     const channel = channels[label] || []
-                    console.log(channel) 
                     const step = channel.length / columns
                     const slice = channel.slice(count * step, (count + 1) * step)
                     temp.push({ [label]: convertToCoordinate(slice) })
@@ -54,8 +43,6 @@ class ECG {
 
         const { barcode, channels } = waveforms
 
-        console.log(channels)
-
         // if (options.downsample) { }
 
         // if (options.reconstitue) {
@@ -64,19 +51,19 @@ class ECG {
         const groupedData = groupData(channels)
 
 
+
         this.barcode = barcode
-        this.channels = groupedData // convertToCoordinate(groupedData)
+        this.channels = groupedData
     }
 
-    plot = (format: 'svg' | 'jpeg' | 'png' | 'pdf' | 'webp' = 'png', options?: { grid?: string, line?: string, rows: number, columns: number }): any => {
+    plot = async (format: 'svg' | 'jpeg' | 'png' | 'pdf' | 'webp' = 'png'): Promise<any> => {
 
 
-        // console.log(this.channels)
-        const image = plot(this.channels, this.order)
+        const image = plot(this.channels, this.order, [6, 12.5])
 
-        // if (format !== 'svg') {
-        //     return await sharp(Buffer.from(image), { density: 1000 }).toFormat('png').toBuffer()
-        // }
+        if (format !== 'svg') {
+            return await sharp(Buffer.from(image), { density: 720 }).toFormat(format).toBuffer()
+        }
 
         return image
     }
