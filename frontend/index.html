@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="stylesheet" type="text/css" href="/styles.css" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>ECG Viewer - ecg.sean.app</title>
+</head>
+
+<body>
+	<header>
+		<div class="export">
+			<div style="display: contents">
+				<input style="display: none" type="file" id="upload" accept=".xml" />
+				<label class="upload" for="upload">Open</label>
+			</div>
+			<button id="sample">Load sample</button>
+			<button id="export">Export</button>
+			<button id="print">Print</button>
+		</div>
+		<div class="toolbar">
+			<select>
+				<option>4x3</option>
+				<option>6x2</option>
+				<option>12x1</option>
+			</select>
+			<select>
+				<option>10mV / s</option>
+			</select>
+			<select>
+				<option>25mm / s</option>
+			</select>
+		</div>
+	</header>
+	<main>
+		<div id="ecg"></div>
+		<div class="sidebar"></div>
+	</main>
+	<script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
+<style></style>
