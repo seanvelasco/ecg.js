@@ -10,7 +10,7 @@ class ECG {
     constructor(xml: string, order: string[][], options: { downsample: number, reconstitue: boolean } = { downsample: 0, reconstitue: false }) {
 
         this.order = order || [
-            ['I', 'AVR', 'V1', 'V5'],
+            ['I', 'AVR', 'V1', 'V4'],
             ['II', 'AVL', 'V2', 'V5'],
             ['III', 'AVF', 'V3', 'V6'],
             ['II']
