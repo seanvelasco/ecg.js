@@ -52,7 +52,7 @@ const documentParser = (xml: string | Buffer): any => {
     }
 
     const HL7_FDA = () => {
-        const waveforms = xmlOjbect?.AnnotatedECG?.component?.[0]?.series?.[0]?.component?.[0]?.sequenceSet?.[0]?.component
+        const waveforms = xmlOjbect?.AnnotatedECG?.component?.[0]?.series?.[0]?.component?.[0]?.sequenceSet?
 
         barcode = xmlOjbect?.AnnotatedECG?.componentOf?.[0]?.timepointEvent?.[0]?.componentOf?.[0]?.subjectAssignment?.[0]?.subject?.[0]?.trialSubject?.[0]?.subjectDemographicPerson?.[0]?.PatientID?.[0] ?? 'NO_BARCODE'
 
