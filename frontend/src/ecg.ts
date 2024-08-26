@@ -1,17 +1,17 @@
 import * as d3 from "d3"
 import Philips from "./ECG/formats/Philips"
+import HL7 from './ECG/formats/HL7'
 
 class ECG {
     channels: any
     order
     format
 
-
     constructor(xmlString: string, format: "3x4" | "12x1" = "3x4") {
 
         const orders = {
             "3x4": [
-                ["I", "AVR", "V1", "V5"],
+                ["I", "AVR", "V1", "V4"],
                 ["II", "AVL", "V2", "V5"],
                 ["III", "AVF", "V3", "V6"],
                 ["II"]
@@ -33,6 +33,9 @@ class ECG {
         this.format = format
         this.order = orders[this.format]
         const temporaryChannels = this.parse(xmlString)
+        console.log(Math.max(...temporaryChannels.AVF))
+        console.log(Math.min(...temporaryChannels.AVF))
+
         this.channels = this.groupData(temporaryChannels)
     }
 
@@ -41,6 +44,11 @@ class ECG {
         const xmlParser = new DOMParser()
 
         const xmlDoc = xmlParser.parseFromString(xml, "text/xml")
+
+
+        if (xml.includes("urn:hl7-org:v3")) {
+            return HL7(xmlDoc)
+        }
 
         // if (xml.includes("SierraECG")) {
         //     this.channels = parser(xmlDoc)
@@ -76,7 +84,7 @@ class ECG {
 
     plot = () => {
 
-        const grid = [6, 12.5]
+        const grid = [6, 12.5] // [6, 12.5]
 
         const lineColor = "#000000"
         const lineWidth = 0.75
@@ -88,19 +96,20 @@ class ECG {
         const textSize = "0.75em"
         const textFont = "sans-serif"
 
+        // max 1.5mV min is -1.5mV
 
         const numberOfSquaresVertically = grid[0]
         const numberOfSquaresHorizontal = grid[1]
-
 
         const DPI = 96
         const height = (numberOfSquaresVertically * 5 * DPI) / 25.4
         const width = (numberOfSquaresHorizontal * 4 * 5 * DPI) / 25.4 / 4
 
-
         const duration = (
             Object.values(this.channels?.[0]?.[0] || {})?.[0] as any
         )?.length
+
+        console.log("DURATION", duration)
 
         const svg = d3.create("svg")
 
@@ -121,10 +130,16 @@ class ECG {
             .domain([0, duration * 4])
             .clamp(false)
 
+        console.log('height in px per box', height)
+        console.log('width in px per box', width)
+
+
         const yScale = d3
             .scaleLinear()
             .range([height, 0])
-            .domain([-300, 300])
+            // This is mV - upper limit is 1.5mV and lower limit is -1.5mV
+            // Each big square is 0.5mV
+            .domain([-1.5, 1.5])
             .clamp(false)
 
         const xMajorGrid = d3

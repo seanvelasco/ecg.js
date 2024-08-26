@@ -17,7 +17,8 @@ const handleOpen = (event: Event) => {
 }
 
 const handleLoadSample = async () => {
-	console.log("handleLoadSample")
+	// raw_data_contec_8000g.xml
+	// const response = await fetch("/raw_data_contec_8000g.xml")
 	const response = await fetch("/129DYPRG.XML")
 	const content = await response.text()
 	await drawECG(content)

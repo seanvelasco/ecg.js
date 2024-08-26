@@ -1,4 +1,4 @@
-// import { XLI } from "./XLI"
+import { convertToUnknwon, convertMicroToMilli } from "../../../utils"
 
 class Code {
     code: number
@@ -159,7 +159,7 @@ export class XLI {
     }
 }
 
-const reconstitude = (series: number[][]) => {
+const reconstitute = (series: number[][]) => {
     const leadI = series[0]
     const leadII = series[1]
     const leadIII = series[2]
@@ -194,21 +194,26 @@ const parser = (xmlDoc: XMLDocument) => {
 
     const decompressedWaveform = new XLI(buf).decode()
 
-    const reconstitutedWaveform = reconstitude(decompressedWaveform)
+    const reconstitutedWaveform = reconstitute(decompressedWaveform)
+
+    for (const lead in reconstitutedWaveform) {
+        console.log(reconstitutedWaveform[lead])
+        reconstitutedWaveform[lead] = reconstitutedWaveform[lead].map(convertToUnknwon)
+    }
 
     return {
         I: reconstitutedWaveform[0],
-        II: reconstitutedWaveform[0],
-        III: reconstitutedWaveform[0],
-        AVR: reconstitutedWaveform[0],
-        AVL: reconstitutedWaveform[0],
-        AVF: reconstitutedWaveform[0],
-        V1: reconstitutedWaveform[0],
-        V2: reconstitutedWaveform[0],
-        V3: reconstitutedWaveform[0],
-        V4: reconstitutedWaveform[0],
-        V5: reconstitutedWaveform[0],
-        V6: reconstitutedWaveform[0]
+        II: reconstitutedWaveform[1],
+        III: reconstitutedWaveform[2],
+        AVR: reconstitutedWaveform[3],
+        AVL: reconstitutedWaveform[4],
+        AVF: reconstitutedWaveform[5],
+        V1: reconstitutedWaveform[6],
+        V2: reconstitutedWaveform[7],
+        V3: reconstitutedWaveform[8],
+        V4: reconstitutedWaveform[9],
+        V5: reconstitutedWaveform[10],
+        V6: reconstitutedWaveform[11]
     }
 }
 
