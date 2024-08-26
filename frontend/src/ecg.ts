@@ -20,14 +20,15 @@ class ECG {
                 ["I"],
                 ["II"],
                 ["III"],
+                ["AVR"],
+                ["AVL"],
+                ["AVF"]
                 ["V1"],
                 ["V2"],
                 ["V3"],
                 ["V4"],
                 ["V5"],
-                ["AVR"],
-                ["AVL"],
-                ["AVF"]
+                ["V6"],
             ]
         }
         this.format = format
