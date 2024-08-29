@@ -1,4 +1,4 @@
-import { convertToUnknwon, convertMicroToMilli } from "../../../utils"
+import { convertToUnknwon } from "../../../utils"
 
 class Code {
     code: number
